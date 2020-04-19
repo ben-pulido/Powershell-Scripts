@@ -1,0 +1,25 @@
+## This script presumes you know the necessary admin role to perform this task and that you have a spo and msol sessions in Powershell
+
+## Enter your User Principal Name after the =
+$upn = 
+
+## Step 1 Query all the SPO Personal Sites in your tenant and filter for the ones you need.
+Get-SPOSite -IncludePersonalSite $true -Limit all -Filter "Url -like '-my.sharepoint.com/personal/'" | where -Property url -like 'identifier here' | select url
+
+## Step 2 Paste the urls into a csv with a column header url. Save file.
+$path = "enter full file path here"
+
+## Step 3 Import the CSV you created into a variable
+$a = Import-Csv $path
+
+## Step 4 Add yourself as a site collection admin to each site in the CSV
+foreach ($u in $a) {Set-SPOUser -Site $u.url -LoginName $upn here -IsSiteCollectionAdmin $true }
+
+## Step 5 Delete each SPO Personal Site
+foreach ($u in $a) {Remove-SPOSite -identity $u.Url}
+
+## Step 6 Get the UserPrincipalNames for each site and add them to your CSV in a column headed users
+Get-MsolUser -All | where -Property userprincipalname -like 'identifier here' | select userprincipalname
+
+## Step 7 Recreate the SPO Personal sites
+foreach ($u in $a) {Request-SPOPersonalSite -UserEmails $u.users}
