@@ -1,0 +1,28 @@
+#### Revoke Azure AD Session Tokens
+
+### Step 1: Create a csv containing a list of the O365 user's userprincipalnames with the column header 'upn'. Document template can be downloaded here: https://bit.ly/3aKUHgj
+
+### Step 2: AzureAD only accepts Object ID's for the revoke powershell cmdlet. This part of the script gets the O365 user's Object IDs and exports them to csv in $p2 
+    ## Declare Variables
+        #Contains path for the CSV created in Step 1. - example "C:\Users\UserA\Folder\SessionRevokationCSV.csv"
+        $p = " Enter csv file location here "
+
+        #Imports the CSV - nothing to do here
+        $d = Import-Csv $p
+        
+        ## Gets users object id from CSV and exports them to a new CSV. Please enter desired file path and file name ending in .csv in the -path parameter below
+        foreach ($u in $d) {
+            get-recipient $u.upn | select DisplayName,primarysmtpaddress,externaldirectoryobjectid | Export-Csv -path "Enter file path for new csv export with \filename.csv included" -append
+        }
+### Step 3
+    ## Declare Variables
+        # Contains export path for AAD Object ID csv created in Step 2. Please copy paste the file path you entered after -path
+        $p2 = "Enter CSV path used in 'export-csv -path"
+
+        #Imports the CSV - nothing to do here
+        $d2 = Import-Csv $p2
+
+        # Revoke Session Tokens for users in $p2
+        foreach ($u in $d2) {
+            Revoke-AzureADUserAllRefreshToken -objectid $u.externaldirectoryobjectid
+        }
